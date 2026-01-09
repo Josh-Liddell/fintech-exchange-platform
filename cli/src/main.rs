@@ -64,10 +64,29 @@ impl Accounts {
     /// # Errors
     /// Attempted overflow
     pub fn withdraw(&mut self, signer: &str, amount: u64) -> Result<Tx, AccountingError> {
-        todo!();
-
         // verify exists, return error otherwise
         // self.acccounts is where they are
+        if let Some(account) = self.accounts.get_mut(signer) {
+            // the data type u64 cannot be negative and unchecked subtraction can crash your program.
+            (*account)
+                .checked_sub(amount)
+                .and_then(|r| {
+                    *account = r;
+                    Some(r)
+                })
+                .ok_or(AccountingError::AccountUnderFunded(
+                    signer.to_string(),
+                    amount,
+                ))
+                // Using map() here is an easy way to only manipulate the non-error result
+                // 'looping' once (or not at all if None) in order to change the Some(r) into a Tx::Withdraw, that gets returned.
+                .map(|_| Tx::Withdraw {
+                    account: signer.to_string(),
+                    amount,
+                })
+        } else {
+            Err(AccountingError::AccountNotFound(signer.to_string()))
+        }
     }
 
     /// Withdraws the amount from the sender account and deposits it in the recipient account.
@@ -80,7 +99,10 @@ impl Accounts {
         recipient: &str,
         amount: u64,
     ) -> Result<(Tx, Tx), AccountingError> {
-        todo!();
+        Ok((
+            self.withdraw(sender, amount)?,
+            self.deposit(recipient, amount)?,
+        ))
     }
 }
 
