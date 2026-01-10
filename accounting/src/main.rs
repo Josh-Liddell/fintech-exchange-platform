@@ -1,5 +1,9 @@
 #![allow(unused_variables, unused_imports, dead_code)]
-use accounting::accounts::Accounts;
+mod accounts;
+mod errors;
+mod tx;
+
+use crate::accounts::Accounts;
 use std::io::{self, Write};
 
 fn read_from_stdin(label: &str) -> String {

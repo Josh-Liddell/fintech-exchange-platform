@@ -84,10 +84,35 @@ impl Accounts {
         recipient: &str,
         amount: u64,
     ) -> Result<(Tx, Tx), AccountingError> {
-        Ok((
-            self.withdraw(sender, amount)?,
-            self.deposit(recipient, amount)?,
-        ))
+        if self.accounts.contains_key(sender)
+            && self.accounts.contains_key(recipient)
+            && self
+                .accounts
+                .get(sender)
+                .map(|amt| *amt >= amount)
+                .unwrap_or(false)
+        {
+            let tx_withdraw = self.withdraw(sender, amount)?;
+            self.deposit(recipient, amount)
+                .map_err(|e| {
+                    self.deposit(sender, amount).unwrap();
+                    e
+                })
+                .map(|tx_deposit| (tx_withdraw, tx_deposit))
+        } else {
+            if !self.accounts.contains_key(sender) {
+                Err(AccountingError::AccountNotFound(sender.to_string()))
+            } else {
+                Err(AccountingError::AccountNotFound(recipient.to_string()))
+            }
+        }
+        // my first attempt was just returning this:
+        // Ok((
+        //     self.withdraw(sender, amount)?,
+        //     self.deposit(recipient, amount)?,
+
+        //     // but what if you withdraw and then the deposit fails?? they need their money back.
+        // ))
     }
 }
 

@@ -2,7 +2,7 @@
 /// when they are applied in the same sequence to an empty state.
 #[derive(Debug, PartialEq)]
 pub enum Tx {
-    // Add variants for storing withdraw/deposit transactions
+    // variants for storing withdraw/deposit transactions
     Deposit { account: String, amount: u64 },
     Withdraw { account: String, amount: u64 },
 }
