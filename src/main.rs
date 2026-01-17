@@ -1,5 +1,6 @@
 #![allow(unused_variables, unused_imports, dead_code)]
 mod accounts;
+mod core;
 mod errors;
 mod tx;
 
@@ -7,7 +8,6 @@ use crate::accounts::Accounts;
 use std::io::{self, Write};
 
 fn read_from_stdin(label: &str) -> String {
-    // println!("{label}");
     print!("{label}> ");
     io::stdout().flush().unwrap();
     let mut buffer = String::new();
@@ -17,6 +17,7 @@ fn read_from_stdin(label: &str) -> String {
     buffer.trim().to_string()
 }
 
+// fix the error handling here
 fn main() {
     let mut ledger = Accounts::new();
 
@@ -26,34 +27,39 @@ fn main() {
         match command.as_str() {
             "deposit" => {
                 let acct = read_from_stdin("Enter an account");
-                let amt: u64 = read_from_stdin("Enter an amount to deposit")
-                    .parse()
-                    .unwrap(); // possibly restart loop or something instead of panicking
-
-                match ledger.deposit(&acct, amt) {
-                    Ok(v) => println!("Transaction successful: {v:#?}"),
-                    Err(e) => eprintln!("There was a problem depositing: {e:?}"),
+                let amt_res = read_from_stdin("Enter an amount to deposit").parse();
+                if let Ok(amt) = amt_res {
+                    match ledger.deposit(&acct, amt) {
+                        Ok(v) => println!("Transaction successful: {v:#?}"),
+                        Err(e) => eprintln!("There was a problem depositing: {e:?}"),
+                    }
+                } else {
+                    eprintln!("Not a number: '{:?}'", amt_res);
                 }
             }
             "withdraw" => {
                 let acct = read_from_stdin("Enter an account");
-                let amt: u64 = read_from_stdin("Enter an amount to deposit")
-                    .parse()
-                    .unwrap();
-
-                match ledger.withdraw(&acct, amt) {
-                    Ok(v) => println!("Transaction successful: {v:#?}"),
-                    Err(e) => eprintln!("There was a problem withdrawing: {e:?}"),
+                let amt_res = read_from_stdin("Enter an amount to withdraw").parse();
+                if let Ok(amt) = amt_res {
+                    match ledger.withdraw(&acct, amt) {
+                        Ok(v) => println!("Transaction successful: {v:#?}"),
+                        Err(e) => eprintln!("There was a problem withdrawing: {e:?}"),
+                    }
+                } else {
+                    eprintln!("Not a number: '{:?}'", amt_res);
                 }
             }
             "send" => {
                 let acct1 = read_from_stdin("Enter the sender account");
                 let acct2 = read_from_stdin("Enter the reciever account");
-                let amt: u64 = read_from_stdin("Enter an amount to send").parse().unwrap();
-
-                match ledger.send(&acct1, &acct2, amt) {
-                    Ok(v) => println!("Transaction successful: {v:#?}"),
-                    Err(e) => eprintln!("There was a problem sending: {e:?}"),
+                let amt_res = read_from_stdin("Enter an amount to send").parse();
+                if let Ok(amt) = amt_res {
+                    match ledger.send(&acct1, &acct2, amt) {
+                        Ok(v) => println!("Transaction successful: {v:#?}"),
+                        Err(e) => eprintln!("There was a problem sending: {e:?}"),
+                    }
+                } else {
+                    eprintln!("Not a number: '{:?}'", amt_res);
                 }
             }
             "print" => println!("{ledger:#?}"),

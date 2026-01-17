@@ -1,6 +1,6 @@
 /// An application-specific error type
-#[derive(Debug)]
-pub enum AccountingError {
+#[derive(Debug, PartialEq, Eq)]
+pub enum ApplicationError {
     AccountNotFound(String),
     AccountUnderFunded(String, u64),
     AccountOverFunded(String, u64),
