@@ -3,20 +3,24 @@ use std::collections::HashMap;
 use crate::{
     accounting::Accounts,
     core::{MatchingEngine, Order, PartialOrder, Receipt, Side},
-    errors::{ApplicationError, ApplicationError},
+    errors::ApplicationError,
     tx::Tx,
 };
 
 /// The core of the core: the [`TradingPlatform`]. Manages accounts, validates-, and orchestrates the processing of each order.
 pub struct TradingPlatform {
-    todo!();
+    matching_engine: MatchingEngine,
+    accounts: Accounts,
+    transaction_log: Vec<Tx>,
 }
 
 impl TradingPlatform {
     /// Creates a new instance without any data.
     pub fn new() -> Self {
         TradingPlatform {
-            todo!();
+            matching_engine: MatchingEngine::new(),
+            accounts: Accounts::new(),
+            transaction_log: Vec::new(),
         }
     }
 

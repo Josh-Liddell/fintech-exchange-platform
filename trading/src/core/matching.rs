@@ -13,6 +13,8 @@ pub struct MatchingEngine {
     pub ordinal: u64,
 
     /// The "Bid" or "Buy" side of the order book. Ordered by ordinal number.
+    // ORDERS IN BINARY HEAP ORDRED BY ORDINAL NUMBER! BECUASE OF THE IMPL in types.rs SO IF I PUSH TO IT, IT ORDERS IT CORRECT
+    // IT WAS IMPLED TO BE REVERSED SO THAT WE CAN POP OFF THE END!
     pub bids: BTreeMap<u64, BinaryHeap<PartialOrder>>,
     /// The "Ask" or "Sell" side of the order book. Ordered by ordinal number.
     pub asks: BTreeMap<u64, BinaryHeap<PartialOrder>>,
@@ -46,16 +48,39 @@ impl MatchingEngine {
         let receipt = match &partial.side {
             Side::Buy => {
                 // Implement this side of the matching!
-                todo!();
+                // This is the code for processing a buy order
+
+                // first we are looking at the existing ask orders that are possible to match with, (applicable price range)
+                // in this case asks that are equal to or less than our bid
+                // we get an iterator over that part of the ask book
+                let orderbook_entry = self.asks.range_mut(u64::MIN..=partial.price);
+
+                // we pass the range iterator (prices and associated orders) and this new order to be matched with it
+                let receipt = MatchingEngine::match_order(&partial, orderbook_entry, ordinal)?;
+
+                // we sum up the qty that was matched with this order
+                let matched_amount: u64 = receipt
+                    .matches
+                    .iter()
+                    .map(|matched_ordr| matched_ordr.amount)
+                    .sum();
+
+                // if quantity is less than original then its not fully matched
+                // and we need to add it to the bids with its remaining amount
+                if matched_amount < original_amount {
+                    partial.amount = original_amount - matched_amount;
+                    let price = partial.price;
+                    let bids = self.bids.entry(price).or_insert(vec![].into());
+                    bids.push(partial);
+                }
+                receipt
             }
             Side::Sell => {
-                // Fetch all orders in the expected price range from this side of the orderbook
                 let orderbook_entry = self.bids.range_mut(partial.price..=u64::MAX);
 
                 let receipt = MatchingEngine::match_order(&partial, orderbook_entry, ordinal)?;
                 let matched_amount: u64 = receipt.matches.iter().map(|m| m.amount).sum();
 
-                // The order wasn't fully matched
                 if matched_amount < original_amount {
                     partial.amount = original_amount - matched_amount;
                     let price = partial.price;
@@ -75,6 +100,12 @@ impl MatchingEngine {
         Ok(receipt)
     }
 
+    // after ~6 hours I got my match_order solution to work and pass all the tests!
+    // but I noticed a possible issue still remaining with the data types, and it didn't feel super clean
+    // So I looked at the solution and the only difference was that I wasn't using a match or a checked sub
+    // I was doing if else instead and cast the u64 to i64 to prevent overflow
+    // I was really close though to a super optimal solution, the rest of my code was the same, but this was better so I switched
+
     /// Matches an order to the provided order book side.
     /// # Parameters
     /// - `order`: the order to match to the book
@@ -82,26 +113,71 @@ impl MatchingEngine {
     /// - `ordinal` the next ordinal number to use if a position is opened
     fn match_order<'a, T>(
         order: &PartialOrder,
-        mut orderbook_entry: T,
+        mut orderbook_iterator: T,
         ordinal: u64,
     ) -> Result<Receipt, ApplicationError>
     where
         T: Iterator<Item = (&'a u64, &'a mut BinaryHeap<PartialOrder>)>,
     {
+        // qty that needs to be matched
         let mut remaining_amount = order.amount;
         let mut matches = vec![];
 
-        // Each matching position's amount is subtraced
+        // while there is still quantity to be matched
         'outer: while remaining_amount > 0 {
             // The iterator contains all orderbook_entry of a price point
-            match orderbook_entry.next() {
-                Some((price, orderbook_entry)) => {
-                    // 1 remove the Order with the lowest sequence nr from the orderbook entry
-                    // 2 check if it's your own order
-                    // 3 subtract the amount from your current order and decide
-                    //   a. is there anything left from the match? split the Order into two and put one back into the orderbook entry
-                    //   b. if nothing is left, add the full order to your matches and continue from 1
-                    todo!()
+            match orderbook_iterator.next() {
+                Some((price, orderbook_entries)) => {
+                    let mut self_matches = vec![];
+
+                    // nested loop getting the next partial order with lowest ordinal
+                    'entry_loop: while let Some(mut entry) = orderbook_entries.pop() {
+                        if order.signer == entry.signer {
+                            // self match got taken off the binary heap so it needs to get added back on later
+                            self_matches.push(entry);
+                            continue 'entry_loop;
+                        }
+
+                        // we know its a match now so we
+                        // try and decrese the existing order by how much our incoming order needs
+                        match entry.remaining.checked_sub(remaining_amount) {
+                            // say the existing order had 20 qty and we have 5 left to match, subtracting 5 wont cause error
+                            // that means this existing order fulfilled what we needed and we are done
+                            // our remaining_amount 'ran out'
+                            Some(_) => {
+                                // we edit the existing order, subtracting its remaining amount, and
+                                // create a new order that represents what we matched with
+                                matches.push(PartialOrder::take_from(
+                                    &mut entry,
+                                    remaining_amount,
+                                    *price,
+                                ));
+
+                                // after subtracting from it, if the existing order still has qty is goes back on the heap
+                                if entry.remaining > 0 {
+                                    orderbook_entries.push(entry);
+                                }
+
+                                // order is fully matched so don't check more orders
+                                break 'entry_loop;
+                            }
+
+                            // if checked sub fails that means we are not done, our remaining_amount exceeded what this order could give
+                            // this means that this existing order fully matched, so we push it to matches
+                            // (incoming order not fully matched, still qty remaining)
+                            None => {
+                                // add the PartialOrder to your matches and continue
+                                remaining_amount -= entry.amount;
+                                entry.remaining = 0;
+                                matches.push(entry);
+                            }
+                        }
+                    }
+
+                    // put self matches back on binary heap (while we still have orderbook_entries available)
+                    self_matches
+                        .into_iter()
+                        .for_each(|order| orderbook_entries.push(order));
                 }
                 // Nothing left to match with
                 None => break 'outer,
@@ -121,7 +197,47 @@ mod tests {
     #[test]
     fn test_MatchingEngine_process_partially_match_order() {
         // Immplement me
-        todo!();
+        // todo!();
+        let mut matching_engine = MatchingEngine::new();
+
+        let alice_receipt = matching_engine
+            .process(Order {
+                price: 10,
+                amount: 1,
+                side: Side::Sell,
+                signer: "ALICE".to_string(),
+            })
+            .unwrap();
+        assert_eq!(alice_receipt.matches, vec![]);
+        assert_eq!(alice_receipt.ordinal, 1);
+
+        let bob_receipt = matching_engine
+            .process(Order {
+                price: 10,
+                amount: 2,
+                side: Side::Buy,
+                signer: "BOB".to_string(),
+            })
+            .unwrap();
+
+        assert_eq!(
+            bob_receipt.matches,
+            vec![PartialOrder {
+                price: 10,
+                amount: 1,
+                remaining: 0,
+                side: Side::Sell,
+                signer: "ALICE".to_string(),
+                ordinal: 1
+            }]
+        );
+        assert_eq!(bob_receipt.ordinal, 2);
+
+        // Alice's order was fulfilled and should now be gone
+        assert!(matching_engine.asks.is_empty());
+
+        // A partial order for bob should still remain
+        assert_eq!(matching_engine.bids.len(), 1);
     }
 
     #[test]

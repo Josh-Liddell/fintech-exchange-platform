@@ -1,10 +1,11 @@
 #![allow(unused_variables, unused_imports, dead_code)]
-mod accounts;
+mod accounting;
 mod core;
 mod errors;
+mod trading_platform;
 mod tx;
 
-use crate::accounts::Accounts;
+use crate::accounting::Accounts;
 use std::io::{self, Write};
 
 fn read_from_stdin(label: &str) -> String {
