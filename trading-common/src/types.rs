@@ -1,10 +1,9 @@
+use serde::{Deserialize, Serialize}; // I addded these on Side, Partial Order, so that it would work on Receipt
 use std::cmp::Reverse;
 use std::str::FromStr;
 
-use crate::errors::ApplicationError;
-
 /// Simplified side of a position as well as order.
-#[derive(Clone, PartialOrd, PartialEq, Eq, Debug, Ord)]
+#[derive(Clone, PartialOrd, PartialEq, Eq, Debug, Ord, Serialize, Deserialize)]
 pub enum Side {
     /// Want to buy
     Buy,
@@ -12,6 +11,7 @@ pub enum Side {
     Sell,
 }
 
+// allows me to parse a string into a 'Side'
 impl FromStr for Side {
     type Err = String;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -24,7 +24,7 @@ impl FromStr for Side {
 }
 
 /// An order for a specified symbol to buy or sell an amount at a given price.
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Order {
     /// Max/min price (depending on the side)
     pub price: u64,
@@ -57,7 +57,7 @@ impl Order {
 }
 
 /// A position represents an unfilled order that is kept in the system for later filling.
-#[derive(Clone, PartialEq, Debug, Eq, Ord)]
+#[derive(Clone, PartialEq, Debug, Eq, Ord, Serialize, Deserialize)]
 pub struct PartialOrder {
     /// Price per unit
     pub price: u64,
@@ -81,7 +81,7 @@ impl PartialOrd for PartialOrder {
 }
 
 /// A receipt issued to the caller for accepting an [`Order`]
-#[derive(Clone, PartialOrd, PartialEq, Eq, Debug)]
+#[derive(Clone, PartialOrd, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct Receipt {
     /// Sequence number
     pub ordinal: u64,

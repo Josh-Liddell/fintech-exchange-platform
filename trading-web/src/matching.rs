@@ -1,11 +1,5 @@
 use std::collections::{BTreeMap, BinaryHeap};
-
-use crate::{
-    core::{Order, Receipt, Side},
-    errors::ApplicationError,
-};
-
-use super::PartialOrder;
+use trading_common::{Order, PartialOrder, Receipt, Side, errors::ApplicationError};
 
 #[derive(Default, Debug)]
 pub struct MatchingEngine {

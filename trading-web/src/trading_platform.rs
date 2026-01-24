@@ -1,11 +1,6 @@
+use crate::{accounting::Accounts, matching::MatchingEngine};
 use std::collections::HashMap;
-
-use crate::{
-    accounting::Accounts,
-    core::{MatchingEngine, Order, PartialOrder, Receipt, Side},
-    errors::ApplicationError,
-    tx::Tx,
-};
+use trading_common::{Order, PartialOrder, Receipt, Side, errors::ApplicationError, tx::Tx};
 
 /// The core of the core: the [`TradingPlatform`]. Manages accounts, validates-, and orchestrates the processing of each order.
 pub struct TradingPlatform {

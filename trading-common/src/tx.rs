@@ -1,6 +1,8 @@
+use serde::{Deserialize, Serialize};
+
 /// A transaction type. Transactions should be able to rebuild a ledger's state
 /// when they are applied in the same sequence to an empty state.
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
 pub enum Tx {
     // variants for storing withdraw/deposit transactions
     Deposit { account: String, amount: u64 },

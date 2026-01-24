@@ -1,6 +1,3 @@
 [workspace]
 resolver = "3"
-members = [
-    "trading",
-    "tui",
-]
+members = ["trading-cli", "trading-common", "trading-web", "tui"]

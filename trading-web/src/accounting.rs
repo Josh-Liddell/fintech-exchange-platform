@@ -1,6 +1,5 @@
-use crate::errors::ApplicationError;
-use crate::tx::Tx;
 use std::collections::HashMap;
+use trading_common::{errors::ApplicationError, tx::Tx};
 
 /// A type for managing accounts and their current currency balance
 #[derive(Debug)]
