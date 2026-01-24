@@ -10,8 +10,8 @@ use crate::{
 /// The core of the core: the [`TradingPlatform`]. Manages accounts, validates-, and orchestrates the processing of each order.
 pub struct TradingPlatform {
     matching_engine: MatchingEngine,
-    accounts: Accounts,
-    transaction_log: Vec<Tx>,
+    pub accounts: Accounts,
+    pub transaction_log: Vec<Tx>,
 }
 
 impl TradingPlatform {
@@ -26,22 +26,32 @@ impl TradingPlatform {
 
     /// Fetches the complete order book at this time
     pub fn orderbook(&self) -> Vec<PartialOrder> {
-        todo!();
+        self.matching_engine
+            .bids
+            .values()
+            .chain(self.matching_engine.asks.values())
+            .flatten()
+            .cloned()
+            .collect()
     }
 
-    /// Withdraw funds
+    /// Retrieves the balance of an account
     pub fn balance_of(&mut self, signer: &str) -> Result<&u64, ApplicationError> {
-        todo!();
+        self.accounts.balance_of(signer)
     }
 
     /// Deposit funds
     pub fn deposit(&mut self, signer: &str, amount: u64) -> Result<Tx, ApplicationError> {
-        todo!();
+        let tx = self.accounts.deposit(signer, amount)?;
+        self.transaction_log.push(tx.clone());
+        Ok(tx)
     }
 
     /// Withdraw funds
     pub fn withdraw(&mut self, signer: &str, amount: u64) -> Result<Tx, ApplicationError> {
-        todo!();
+        let tx = self.accounts.withdraw(signer, amount)?;
+        self.transaction_log.push(tx.clone());
+        Ok(tx)
     }
 
     /// Transfer funds between sender and recipient
@@ -51,12 +61,37 @@ impl TradingPlatform {
         recipient: &str,
         amount: u64,
     ) -> Result<(Tx, Tx), ApplicationError> {
-        todo!();
+        let (tx1, tx2) = self.accounts.send(sender, recipient, amount)?;
+        self.transaction_log.push(tx1.clone());
+        self.transaction_log.push(tx2.clone());
+        Ok((tx1, tx2))
     }
 
     /// Process a given order and apply the outcome to the accounts involved. Note that there are very few safeguards in place.
     pub fn order(&mut self, order: Order) -> Result<Receipt, ApplicationError> {
-        todo!();
+        if self.accounts.accounts.contains_key(&order.signer) {
+            let acctbal = *self.accounts.accounts.get(&order.signer).unwrap(); // ignoring error because not possible
+            if order.side == Side::Buy && acctbal < order.amount * order.price {
+                return Err(ApplicationError::AccountUnderFunded(order.signer, acctbal));
+            }
+
+            let receipt = self.matching_engine.process(order.clone())?;
+            let total_realized: u64 = receipt.matches.iter().map(|o| o.amount * o.price).sum();
+
+            // now that the matches were made, we transfer funds based on those matches
+            // for eached matched order we trasfer funds from the buyer to seller
+            for p_order in &receipt.matches {
+                let amount = p_order.amount * p_order.price;
+                match &order.side {
+                    Side::Buy => self.send(&order.signer, &p_order.signer, amount)?,
+                    Side::Sell => self.send(&p_order.signer, &order.signer, amount)?,
+                };
+            }
+
+            Ok(receipt)
+        } else {
+            Err(ApplicationError::AccountNotFound(order.signer))
+        }
     }
 }
 

@@ -1,4 +1,7 @@
 use std::cmp::Reverse;
+use std::str::FromStr;
+
+use crate::errors::ApplicationError;
 
 /// Simplified side of a position as well as order.
 #[derive(Clone, PartialOrd, PartialEq, Eq, Debug, Ord)]
@@ -7,6 +10,17 @@ pub enum Side {
     Buy,
     /// Want to sell
     Sell,
+}
+
+impl FromStr for Side {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "buy" => Ok(Side::Buy),
+            "sell" => Ok(Side::Sell),
+            _ => Err(format!("Invalid side: {}", s)),
+        }
+    }
 }
 
 /// An order for a specified symbol to buy or sell an amount at a given price.

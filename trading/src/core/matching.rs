@@ -13,8 +13,8 @@ pub struct MatchingEngine {
     pub ordinal: u64,
 
     /// The "Bid" or "Buy" side of the order book. Ordered by ordinal number.
-    // ORDERS IN BINARY HEAP ORDRED BY ORDINAL NUMBER! BECUASE OF THE IMPL in types.rs SO IF I PUSH TO IT, IT ORDERS IT CORRECT
-    // IT WAS IMPLED TO BE REVERSED SO THAT WE CAN POP OFF THE END!
+    // orders in the binary heap ordered by ordinal number
+    // it was impled to be revered so we can pop off the end, and if you push it orders it correctly
     pub bids: BTreeMap<u64, BinaryHeap<PartialOrder>>,
     /// The "Ask" or "Sell" side of the order book. Ordered by ordinal number.
     pub asks: BTreeMap<u64, BinaryHeap<PartialOrder>>,
@@ -47,7 +47,6 @@ impl MatchingEngine {
         // Orders are matched to the opposite side
         let receipt = match &partial.side {
             Side::Buy => {
-                // Implement this side of the matching!
                 // This is the code for processing a buy order
 
                 // first we are looking at the existing ask orders that are possible to match with, (applicable price range)
@@ -99,12 +98,6 @@ impl MatchingEngine {
         self.history.push(receipt.clone());
         Ok(receipt)
     }
-
-    // after ~6 hours I got my match_order solution to work and pass all the tests!
-    // but I noticed a possible issue still remaining with the data types, and it didn't feel super clean
-    // So I looked at the solution and the only difference was that I wasn't using a match or a checked sub
-    // I was doing if else instead and cast the u64 to i64 to prevent overflow
-    // I was really close though to a super optimal solution, the rest of my code was the same, but this was better so I switched
 
     /// Matches an order to the provided order book side.
     /// # Parameters
@@ -197,7 +190,6 @@ mod tests {
     #[test]
     fn test_MatchingEngine_process_partially_match_order() {
         // Immplement me
-        // todo!();
         let mut matching_engine = MatchingEngine::new();
 
         let alice_receipt = matching_engine

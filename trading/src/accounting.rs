@@ -5,7 +5,7 @@ use std::collections::HashMap;
 /// A type for managing accounts and their current currency balance
 #[derive(Debug)]
 pub struct Accounts {
-    accounts: HashMap<String, u64>,
+    pub accounts: HashMap<String, u64>,
 }
 
 impl Accounts {
@@ -14,6 +14,13 @@ impl Accounts {
         Accounts {
             accounts: HashMap::new(),
         }
+    }
+
+    /// Retrieves the balance of an account
+    pub fn balance_of(&self, signer: &str) -> Result<&u64, ApplicationError> {
+        self.accounts
+            .get(signer)
+            .ok_or(ApplicationError::AccountNotFound(signer.to_string()))
     }
 
     /// Either creates a new account and deposits the `amount` provided into the `signer` or adds the amount to the existing account.
