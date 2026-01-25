@@ -1,5 +1,64 @@
-fn main() {
-    println!("Hello World!");
+mod args;
+mod orderform;
+
+use args::{Args, Commands};
+use clap::Parser;
+use trading_common::PartialOrder;
+use trading_common::requests::*;
+
+#[tokio::main]
+async fn main() {
+    let args = Args::parse();
+    let client = reqwest::Client::new();
+
+    if let Some(signer) = args.balance {
+        let req = AccountBalanceRequest { signer };
+
+        let res = client
+            .post("http://localhost:8080/account")
+            .json(&req)
+            .send()
+            .await
+            .unwrap()
+            .text()
+            .await
+            .unwrap();
+
+        println!("{res}");
+    }
+
+    if args.orderbook {
+        let res = reqwest::get("http://localhost:8080/orderbook")
+            .await
+            .unwrap()
+            .json::<Vec<PartialOrder>>()
+            .await
+            .unwrap();
+
+        println!("{:#?}", res);
+    }
+
+    match args.command {
+        Some(Commands::Deposit { signer, amount }) => {
+            let req = AccountUpdateRequest { signer, amount };
+
+            let res = client
+                .post("http://localhost:8080/account/deposit")
+                .json(&req)
+                .send()
+                .await
+                .unwrap()
+                .text()
+                .await
+                .unwrap();
+
+            println!("Response: {}", res);
+        }
+        Some(Commands::Order) => {
+            orderform::showform();
+        }
+        _ => {}
+    }
 }
 
 // #![allow(unused_variables, unused_imports, dead_code)]

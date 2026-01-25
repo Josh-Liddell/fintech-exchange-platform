@@ -113,7 +113,7 @@ fn Form<'a>(props: &mut FormProps<'a>, mut hooks: Hooks) -> impl Into<AnyElement
     }
 }
 
-fn main() {
+pub fn showform() {
     let mut first_name = String::new();
     let mut last_name = String::new();
     smol::block_on(

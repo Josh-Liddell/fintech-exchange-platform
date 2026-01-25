@@ -1,5 +1,4 @@
 use crate::{accounting::Accounts, matching::MatchingEngine};
-use std::collections::HashMap;
 use trading_common::{Order, PartialOrder, Receipt, Side, errors::ApplicationError, tx::Tx};
 
 /// The core of the core: the [`TradingPlatform`]. Manages accounts, validates-, and orchestrates the processing of each order.
@@ -71,7 +70,7 @@ impl TradingPlatform {
             }
 
             let receipt = self.matching_engine.process(order.clone())?;
-            let total_realized: u64 = receipt.matches.iter().map(|o| o.amount * o.price).sum();
+            let _total_realized: u64 = receipt.matches.iter().map(|o| o.amount * o.price).sum();
 
             // now that the matches were made, we transfer funds based on those matches
             // for eached matched order we trasfer funds from the buyer to seller
