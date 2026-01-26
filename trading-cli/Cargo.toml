@@ -12,3 +12,4 @@ trading_common = { path = "../trading-common" }
 tokio = { version = "1.48.0", features = ["full"] }
 iocraft = "0.7.16"
 smol = "2.0.2"
+# url = "2.5.8"
