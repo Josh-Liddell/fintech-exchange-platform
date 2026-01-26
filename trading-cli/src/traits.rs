@@ -25,7 +25,9 @@ impl Trading for Client {
     }
 
     async fn print_orderbook(&self) {
-        let res = reqwest::get("http://localhost:8080/orderbook")
+        let res = self
+            .get("http://localhost:8080/orderbook")
+            .send()
             .await
             .unwrap()
             .json::<Vec<PartialOrder>>()
@@ -36,7 +38,9 @@ impl Trading for Client {
     }
 
     async fn print_txlog(&self) {
-        let res = reqwest::get("http://localhost:8080/order/history")
+        let res = self
+            .get("http://localhost:8080/order/history")
+            .send()
             .await
             .unwrap()
             .json::<Vec<Tx>>()
