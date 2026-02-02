@@ -5,7 +5,7 @@ use trading_common::Order;
 use trading_common::requests::*;
 
 // type alias
-// web::Data uses Arc so I dont need to specify it here
+// web::Data uses Arc so no need to specify it here
 type Platform = web::Data<Mutex<TradingPlatform>>;
 
 #[post("/account")]
@@ -18,6 +18,8 @@ async fn account(req_body: web::Json<AccountBalanceRequest>, data: Platform) -> 
     }
 }
 
+// custom error?, implement responder?
+
 #[post("/account/deposit")]
 async fn deposit(req_body: web::Json<AccountUpdateRequest>, data: Platform) -> impl Responder {
     match data
@@ -25,8 +27,6 @@ async fn deposit(req_body: web::Json<AccountUpdateRequest>, data: Platform) -> i
         .unwrap()
         .deposit(&req_body.signer, req_body.amount)
     {
-        // okay problem with returning string is that it is a 200 ok response and maybe we dont want that,
-        // CONSIDER implementing responder for a custom error?
         Ok(r) => HttpResponse::Ok().body(format!("Deposit success: {r:#?}")),
         Err(e) => HttpResponse::BadRequest().body(format!("Deposit failed: {e:?}")),
     }
@@ -64,7 +64,6 @@ async fn order(req_body: web::Json<Order>, data: Platform) -> impl Responder {
     }
 }
 
-// // it says get calls dont have parameters, but I think they do?
 #[get("/orderbook")]
 async fn orderbook(data: Platform) -> impl Responder {
     web::Json(data.lock().unwrap().orderbook())

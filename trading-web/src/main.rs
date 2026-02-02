@@ -8,8 +8,7 @@ use routes::*;
 use std::sync::Mutex;
 use trading_platform::TradingPlatform;
 
-// #[derive(Debug)]
-// struct TradingError(ApplicationError); // ?????
+// struct TradingError(ApplicationError); ??
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
