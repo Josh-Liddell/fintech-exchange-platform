@@ -62,6 +62,7 @@ impl MatchingEngine {
                 // and we need to add it to the bids with its remaining amount
                 if matched_amount < original_amount {
                     partial.amount = original_amount - matched_amount;
+                    partial.remaining = original_amount - matched_amount;
                     let price = partial.price;
                     let bids = self.bids.entry(price).or_insert(vec![].into());
                     bids.push(partial);
@@ -69,13 +70,14 @@ impl MatchingEngine {
                 receipt
             }
             Side::Sell => {
-                let orderbook_entry = self.bids.range_mut(partial.price..=u64::MAX);
+                let orderbook_entry = self.bids.range_mut(partial.price..=u64::MAX).rev();
 
                 let receipt = MatchingEngine::match_order(&partial, orderbook_entry, ordinal)?;
                 let matched_amount: u64 = receipt.matches.iter().map(|m| m.amount).sum();
 
                 if matched_amount < original_amount {
                     partial.amount = original_amount - matched_amount;
+                    partial.remaining = original_amount - matched_amount;
                     let price = partial.price;
                     let asks = self.asks.entry(price).or_insert(vec![].into());
                     asks.push(partial);
@@ -145,6 +147,7 @@ impl MatchingEngine {
                                     orderbook_entries.push(entry);
                                 }
 
+                                remaining_amount = 0;
                                 // order is fully matched so don't check more orders
                                 break 'entry_loop;
                             }
@@ -153,9 +156,12 @@ impl MatchingEngine {
                             // this means that this existing order fully matched, so we push it to matches
                             // (incoming order not fully matched, still qty remaining)
                             None => {
-                                // add the PartialOrder to your matches and continue
-                                remaining_amount -= entry.amount;
+                                let fill_qty = entry.remaining;
+                                remaining_amount -= fill_qty;
+                                entry.amount = fill_qty;
                                 entry.remaining = 0;
+
+                                // add the PartialOrder to your matches and continue
                                 matches.push(entry);
                             }
                         }

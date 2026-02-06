@@ -48,6 +48,20 @@ async fn main() -> Result<(), Box<dyn Error>> {
                     eprintln!("Not a number: {:?}", raw_amount);
                 }
             }
+            "test" => {
+                let req = AccountUpdateRequest {
+                    signer: "josh".to_string(),
+                    amount: 20000,
+                };
+                let req2 = AccountUpdateRequest {
+                    signer: "tyler".to_string(),
+                    amount: 20000,
+                };
+                let resp = client.platform_post(&req, "account/deposit").await?;
+                println!("{resp}");
+                let resp = client.platform_post(&req2, "account/deposit").await?;
+                println!("{resp}");
+            }
             "withdraw" | "w" => {
                 let signer = read_from_stdin("Account");
                 let raw_amount = read_from_stdin("Amount").parse();

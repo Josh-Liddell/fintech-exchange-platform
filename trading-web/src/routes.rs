@@ -66,7 +66,8 @@ async fn order(req_body: web::Json<Order>, data: Platform) -> impl Responder {
 
 #[get("/orderbook")]
 async fn orderbook(data: Platform) -> impl Responder {
-    web::Json(data.lock().unwrap().orderbook())
+    let (bids, asks) = data.lock().unwrap().orderbook();
+    web::Json(OrderBookResponse { bids, asks })
 }
 
 #[get("/order/history")]

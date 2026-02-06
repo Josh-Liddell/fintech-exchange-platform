@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize}; // I addded these on Side, Partial Order, so that it would work on Receipt
 use std::cmp::Reverse;
+use std::fmt;
 use std::str::FromStr;
+use tabled::Tabled;
 
 /// Simplified side of a position as well as order.
 #[derive(Clone, PartialOrd, PartialEq, Eq, Debug, Ord, Serialize, Deserialize)]
@@ -19,6 +21,15 @@ impl FromStr for Side {
             "buy" => Ok(Side::Buy),
             "sell" => Ok(Side::Sell),
             _ => Err(format!("Invalid side: {}", s)),
+        }
+    }
+}
+
+impl fmt::Display for Side {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Side::Buy => write!(f, "Buy"),
+            Side::Sell => write!(f, "Sell"),
         }
     }
 }
@@ -57,15 +68,17 @@ impl Order {
 }
 
 /// A position represents an unfilled order that is kept in the system for later filling.
-#[derive(Clone, PartialEq, Debug, Eq, Ord, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Debug, Eq, Ord, Serialize, Deserialize, Tabled)]
 pub struct PartialOrder {
     /// Price per unit
     pub price: u64,
     /// Initial number of units in the order
+    #[tabled(skip)]
     pub amount: u64,
     /// Remaining number of units after potential matches
     pub remaining: u64,
     /// Buy or sell side of the book
+    #[tabled(skip)]
     pub side: Side,
     /// Signer of the order
     pub signer: String,
