@@ -14,7 +14,7 @@ use trading_platform::TradingPlatform;
 async fn main() -> std::io::Result<()> {
     let platform = web::Data::new(Mutex::new(TradingPlatform::new()));
 
-    println!("Starting server on http://127.0.0.1:8080...");
+    println!("Starting trading server on http://127.0.0.1:8080...");
     HttpServer::new(move || {
         App::new()
             .app_data(platform.clone())

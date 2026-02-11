@@ -35,15 +35,16 @@ impl Trading for Client {
             .json()
             .await?;
 
-        let OrderBookResponse { mut bids, mut asks } = res;
-        bids.sort_by(|a, b| b.price.cmp(&a.price));
+        let OrderBookResponse { mut asks, mut bids } = res;
         asks.sort_by(|a, b| b.price.cmp(&a.price));
+        bids.sort_by(|a, b| b.price.cmp(&a.price));
 
-        let mut table = Table::new(bids);
-        let mut table2 = Table::new(asks);
-        table.with(Style::modern());
-        table2.with(Style::modern());
-        println!("Sell orders:\n{}\n\nBuy orders:\n{}", table, table2);
+        let mut ask_table = Table::new(asks);
+        let mut bid_table = Table::new(bids);
+        ask_table.with(Style::modern());
+        bid_table.with(Style::modern());
+
+        println!("Sell orders:\n{}\n\nBuy orders:\n{}", ask_table, bid_table);
 
         Ok(())
     }

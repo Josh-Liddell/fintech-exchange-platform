@@ -7,13 +7,13 @@ license = "MIT"
 edition = "2024"
 
 [dependencies]
-crossterm = { version = "0.28.1", features = ["event-stream"] }
+crossterm = { version = "0.29.0", features = ["event-stream"] }
 futures = "0.3.31"
-ratatui = "0.29.0"
+ratatui = "0.30.0"
 tokio = { version = "1.40.0", features = ["full"] }
 color-eyre = "0.6.3"
-iocraft = "0.7.16"
-smol = "2.0.2"
+trading_common = { path = "../trading-common" }
+reqwest = { version = "0.13.2", features = ["json"] }
 
 # Read the optimization guideline for more details: https://ratatui.rs/recipes/apps/release-your-app/#optimizations
 # [profile.release]
